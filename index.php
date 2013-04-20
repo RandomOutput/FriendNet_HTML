@@ -15,6 +15,8 @@
       });
 
       // Additional initialization code such as adding Event Listeners goes here
+
+      FB.login();
     };
 
     // Load the SDK asynchronously
