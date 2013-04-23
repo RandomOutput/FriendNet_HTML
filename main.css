@@ -1,0 +1,13 @@
+canvas { 
+	border: 0px solid black;
+}
+
+body {
+	background-color: #1e1e3c; 
+	color: #FFFFFF; 
+	font-family: helvetica,arial,sans-serif;
+}
+
+a { color: #FFFFFF;}
+a:visited { color: #AAAAFF;}
+
