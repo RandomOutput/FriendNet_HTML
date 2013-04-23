@@ -24,9 +24,9 @@ window.fbAsyncInit = function()
 
   FB.getLoginStatus(function(response) {
     if (response.status === 'connected') {
-      document.getElementById('statusLine').innerHTML = '<a href="#">Begin</a>';
+      logLink.innerHTML = 'Begin';
       outLink.innerHTML = 'Log Out';
-      logLink.addEventListener("click", LoggedIn, false);
+      logLink.addEventListener("click", fbLogin, false);
       outLink.addEventListener("click", logOut, false);
     } else if (response.status === 'not_authorized'){
       // not_authorized
