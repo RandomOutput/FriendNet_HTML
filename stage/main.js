@@ -1,5 +1,5 @@
-var width = 500;
-var height = 500;
+var width = 1200;
+var height = 700;
 
 var minX = 0;
 var maxX = 1
@@ -277,7 +277,7 @@ function normalizeWithZoom(component, num)
  
   }
 
-  retVal = ((num + (0 - min)) / (Math.abs(max - min) / zoomFactor)) - pan;
+  retVal = ((num + (0 - min) - pan) / (Math.abs(max - min) / zoomFactor));
 
 
   return retVal;
