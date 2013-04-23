@@ -3,6 +3,12 @@ var logLink
 var outLink
 
 
+
+var zoomFactor = 1;
+var xPan = 0.0; // top left corner
+var yPan = 0.0; // top left corner
+
+
 window.fbAsyncInit = function() 
 {
   // init the FB JS SDK
@@ -19,8 +25,41 @@ window.fbAsyncInit = function()
 
   logLink.addEventListener("click", fbLogin, false);
   
+  window.addEventListener('keydown', function(event){
+   console.log("CharCode value: "+event.keyCode);
+/*
+W CharCode value: 87 fbload.js:23
+A CharCode value: 65 fbload.js:23
+S CharCode value: 83 fbload.js:23
+D CharCode value: 68 fbload.js:23
+O CharCode value: 79 fbload.js:23
+L CharCode value: 76 
+*/
+    switch(event.keyCode)
+    {
+      case 87:
+        yPan += -0.1;
+        break;
+      case 65:
+        xPan += -0.1;
+        break;
+      case 83:
+        yPan += 0.1;
+        break;
+      case 68:
+        xPan += 0.1;
+        break;
+      case 79:
+        zoomFactor += 0.1;
+        break;
+      case 76:
+        zoomFactor += -0.1;
+        break;
+    }
+  }, false);
   
   // Additional initialization code such as adding Event Listeners goes here
+
 
   FB.getLoginStatus(function(response) {
     if (response.status === 'connected') {

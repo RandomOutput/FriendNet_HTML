@@ -1,3 +1,12 @@
+var width = 1200;
+var height = 700;
+
+var minX = 0;
+var maxX = 1
+var minY = 0;
+var maxY = 1
+
+
 var nodes = {};
 var readyForNext = true;
 var ittr = 0;
@@ -88,12 +97,18 @@ function getStarted(response)
   allFriends = response.friends.data;
   console.log(allFriends);
 
-
+  //Arrange friends on grid
   for (var i=0;i<allFriends.length;i++)
   {
     var id = allFriends[i].id;
     var friendName = allFriends[i].name;
-    nodes[friendName] = new Node(100 + (10 * (i % 100)), 100 + (150 * Math.floor(i / 100)), id, friendName);
+    var colCount = Math.floor(Math.sqrt(allFriends.length));
+    var xPos = (0.05 * (i % colCount));
+    var yPos = (0.05 * Math.floor(i / colCount));
+    console.log("colCount: " + colCount);
+    console.log("xPos: " + xPos);
+    console.log("yPos: " + yPos);
+    nodes[friendName] = new Node(xPos,yPos, id, friendName);
   }
   
   console.log("********\n\n");
@@ -135,7 +150,7 @@ function replotter()
 {
 
   ctx.fillStyle = "rgba(30,30,60,1.0)";
-  ctx.fillRect (0,0, 1200, 700);
+  ctx.fillRect (0,0, width, height);
   
   for(var i=0;i<allFriends.length;i++)
   { 
@@ -145,8 +160,8 @@ function replotter()
     {
       if(plotSteps < 53000)
       {
-        plotSteps++;
-        replotPointsPass1(node, ((53000.0 - plotSteps) / 53000.0));
+        //plotSteps++;
+        //replotPointsPass1(node, ((53000.0 - plotSteps) / 53000.0));
       }
       else
       {
@@ -182,8 +197,8 @@ function replotter()
         ctx.globalAlpha = 0.08;
         ctx.strokeStyle = "rgb(100,100,256)"
         ctx.beginPath();
-        ctx.moveTo(node.x, node.y);
-        ctx.lineTo(node2.x, node2.y);
+        ctx.moveTo( normalizeWithZoom('x', node.x) * width, normalizeWithZoom('y', node.y) * height); 
+        ctx.lineTo( normalizeWithZoom('x', node2.x) * width, normalizeWithZoom('y', node2.y) * height);
         ctx.stroke();
         ctx.restore();
       }
@@ -191,6 +206,35 @@ function replotter()
     
     node.draw();
   }
+}
+
+//Normalize coordinate and apply zoom factor
+function normalizeWithZoom(component, num)
+{
+  var retVal;
+  var min; 
+  var max;
+  var pan;
+
+  switch(component)
+  {
+    case 'x':
+      min = minX;
+      max = maxX;
+      pan = xPan;
+      break;
+    case 'y':
+      min = minY;
+      max = maxY;
+      pan = yPan;
+      break;
+
+      retVal = (num + (0 - min)) / (Math.abs(max - min) / zoomFactor) - pan;
+  }
+
+
+
+  return retVal;
 }
 
 function replotPointsPass1(node, temp)
@@ -226,19 +270,19 @@ function replotPointsPass1(node, temp)
       mututalNode = true;
     }
     
-    if(mututalNode == true && dist > 50)
+    if(mututalNode == true && dist > 0.71)
     {
         xTotal += xDist;
         yTotal += yDist;
         avCount++;
     }
-    else if(mututalNode == true && dist <= 40)
+    else if(mututalNode == true && dist <= 0.57)
     {
         xTotal -= xDist*5;
         yTotal -= yDist*5;
         avCount++;
     }
-    else if(mututalNode == false && dist < 75)
+    else if(mututalNode == false && dist < 0.107)
     {
         xTotal -= xDist*2;
         yTotal -= yDist*2;
@@ -265,8 +309,10 @@ function replotPointsPass1(node, temp)
     xComp = xAverage / avDist;
     yComp = yAverage / avDist;
     
-    node.x += xComp * (60 * temp);
-    node.y += yComp * (60 * temp);
+    node.x += xComp * (1.0 * temp);
+    node.y += yComp * (1.0 * temp);
+
+    checkBounds(node.x, node.y);
   }
   else
   {
@@ -294,7 +340,7 @@ function replotPointsPass2(node, temp)
     var yDist = node2.y - node.y;
     var dist = Math.sqrt(xDist*xDist+ yDist*yDist);
     
-    if(dist < 3)
+    if(dist < 0.004)
     {
       xTotal -= xDist;
       yTotal -= yDist;
@@ -321,10 +367,21 @@ function replotPointsPass2(node, temp)
     xComp = xAverage / avDist;
     yComp = yAverage / avDist;
     
-    node.x += xComp * (3 * temp);
-    node.y += yComp * (3 * temp);
+    node.x += xComp * (0.003 * temp);
+    node.y += yComp * (0.003 * temp);
+
+    checkBounds(node.x, node.y);
   }
   
+}
+
+function checkBounds(_x,_y)
+{
+  if(_x > maxX) maxX = _x;
+  else if(_x < minX) minX = _x;
+
+  if(_y > maxY) maxY = _y;
+  else if(_y < minY) minY = _y;
 }
 
 
@@ -339,18 +396,20 @@ function Node(_x, _y, _id, _name)
 
   this.draw = function()
   {
-
-    if(this.x < 0) this.x = 10;
-    else if(this.x > 1200) this.x = 1190;
+    /*
+    if(this.x < 0) this.x = 0.01;
+    else if(this.x > 1) this.x = 0.99;
     
-    if(this.y < 0) this.y = 10;
-    else if(this.y > 700) this.y = 690;
+    if(this.y < 0) this.y = 0.01;
+    else if(this.y > 1) this.y = 0.99;
+    */
+
     ctx.save();
     ctx.fillStyle = "rgba(120,120,200,1.0)";
-    ctx.fillRect (this.x,this.y, 2, 2);
+    ctx.fillRect ( normalizeWithZoom('x', this.x) * width, normalizeWithZoom('y', this.y) * height, 2, 2);
     ctx.fillStyle = "rgba(220,80,80,1.0)";
     ctx.font="7px Helvetica, Arial";
-    ctx.fillText(this.name,this.x+3,this.y+2);
+    ctx.fillText(this.name,( normalizeWithZoom('x', this.x) * width)+3,( normalizeWithZoom('y', this.y) * height)+2);
     ctx.restore();
   };
 }
