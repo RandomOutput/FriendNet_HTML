@@ -1,5 +1,5 @@
-var width = 1200;
-var height = 700;
+var width = 500;
+var height = 500;
 
 var minX = 0;
 var maxX = 1
@@ -63,11 +63,11 @@ var dataPulled = false;
 function receiveMutuals(response)
 {
   ctx.fillStyle = "rgba(30,30,60,1.0)";
-  ctx.fillRect (0,0, 1200, 700);
+  ctx.fillRect (0,0, width, height);
   ctx.fillStyle = "rgba(256,256,256,0.1)";
-  ctx.fillRect (0,0,1200,50);
+  ctx.fillRect (0,0,width,50);
   ctx.fillStyle = "rgba(256,256,256," + (ittr / allFriends.length) + ")";
-  ctx.fillRect (0,0,1200*(ittr / allFriends.length),50);
+  ctx.fillRect (0,0,width*(ittr / allFriends.length),50);
 
   if(response.mutualfriends != null)
   {
@@ -109,6 +109,7 @@ function getStarted(response)
     console.log("xPos: " + xPos);
     console.log("yPos: " + yPos);
     nodes[friendName] = new Node(xPos,yPos, id, friendName);
+    checkBounds(nodes[friendName]);
   }
   
   console.log("********\n\n");
@@ -142,6 +143,18 @@ function callMutuals()
 
 function amimReplotter()
 {
+  if(replotPointsPass1Go == true)
+  {
+    if(plotSteps < 53000)
+    {
+      plotSteps++; 
+    }
+    else
+    {
+      replotPointsPass1Go = false;
+      replotPointsPass2Go = true;
+    }
+  }
   replotter();
   animFrame( amimReplotter );
 }
@@ -158,10 +171,11 @@ function replotter()
 
     if(replotPointsPass1Go == true)
     {
+      replotPointsPass1(node, ((53000.0 - plotSteps) / 53000.0));
       if(plotSteps < 53000)
       {
-        //plotSteps++;
-        //replotPointsPass1(node, ((53000.0 - plotSteps) / 53000.0));
+        plotSteps++;
+        
       }
       else
       {
@@ -180,6 +194,7 @@ function replotter()
       {
         replotPointsPass2Go = false;
         drawConnections = true;
+        redefineViewport();
         document.getElementById('statusLine').innerHTML = 'Graph Complete';
       }
     }
@@ -208,6 +223,37 @@ function replotter()
   }
 }
 
+function redefineViewport()
+{
+  var firstSwitch = false;
+  for(var i=0;i<allFriends.length;i++)
+  { 
+    var hasMutuals = false;
+    node = nodes[allFriends[i].name];
+    var nodeConn = node.nodeConnections;
+
+    for(conn in nodeConn)
+    {
+      hasMutuals = true;
+      break;
+    }
+
+    if(hasMutuals)
+    {
+      if(!firstSwitch)
+      {
+        minX = node.x;
+        maxX = node.x;
+        minY = node.y;
+        maxY = node.y;
+        firstSwitch = true;
+      }
+
+      checkBounds(node);
+    }
+  }
+}
+
 //Normalize coordinate and apply zoom factor
 function normalizeWithZoom(component, num)
 {
@@ -228,10 +274,10 @@ function normalizeWithZoom(component, num)
       max = maxY;
       pan = yPan;
       break;
-
-      retVal = (num + (0 - min)) / (Math.abs(max - min) / zoomFactor) - pan;
+ 
   }
 
+  retVal = ((num + (0 - min)) / (Math.abs(max - min) / zoomFactor)) - pan;
 
 
   return retVal;
@@ -258,34 +304,40 @@ function replotPointsPass1(node, temp)
       continue;
     }
 
-    var mututalNode = false;
+    var mutualNode = false;
     var xDist = node2.x - node.x;
     var yDist = node2.y - node.y;
     var dist = Math.sqrt(xDist*xDist+ yDist*yDist);
 
-    if(nodeConn[node2.id] != null)
-    
+    if(nodeConn[node2.id] != null) mutualNode = true;
+    /*{
+      //console.log(""+node.name + " : " + nodeConn[node2.id].name + " = true")
+      mutualNode = true;
+    }*/
+
+    //console.log(""+node.name + " : " + nodeConn[node2.id] + " = false")
+    /*
     for(searchkey in nodeConn)
     {
-      mututalNode = true;
-    }
+      mutualNode = true;
+    }*/
     
-    if(mututalNode == true && dist > 0.71)
+    if(mutualNode == true && dist > 0.0714)
     {
         xTotal += xDist;
         yTotal += yDist;
         avCount++;
     }
-    else if(mututalNode == true && dist <= 0.57)
+    else if(mutualNode == true && dist <= 0.057)
     {
         xTotal -= xDist*5;
         yTotal -= yDist*5;
         avCount++;
     }
-    else if(mututalNode == false && dist < 0.107)
+    else if(mutualNode == false && dist < 0.107)
     {
-        xTotal -= xDist*2;
-        yTotal -= yDist*2;
+        xTotal -= xDist*3;
+        yTotal -= yDist*3;
         avCount++;
     } 
   }
@@ -311,8 +363,11 @@ function replotPointsPass1(node, temp)
     
     node.x += xComp * (1.0 * temp);
     node.y += yComp * (1.0 * temp);
-
-    checkBounds(node.x, node.y);
+    
+    if(nodeConn != {})
+    {
+      checkBounds(node);
+    }
   }
   else
   {
@@ -331,6 +386,8 @@ function replotPointsPass2(node, temp)
   var xComp = 0;
   var yComp = 0;
   var avCount = 0.0;
+
+  var nodeConn = node.nodeConnections;
   
   for(var j=0;j<allFriends.length;j++)
   {
@@ -370,18 +427,21 @@ function replotPointsPass2(node, temp)
     node.x += xComp * (0.003 * temp);
     node.y += yComp * (0.003 * temp);
 
-    checkBounds(node.x, node.y);
+    if(nodeConn != {})
+    {
+      checkBounds(node);
+    }
   }
   
 }
 
-function checkBounds(_x,_y)
+function checkBounds(node)
 {
-  if(_x > maxX) maxX = _x;
-  else if(_x < minX) minX = _x;
+  if(node.x > maxX) maxX = node.x;
+  else if(node.x < minX) minX = node.x;
 
-  if(_y > maxY) maxY = _y;
-  else if(_y < minY) minY = _y;
+  if(node.y > maxY) maxY = node.y;
+  else if(node.y < minY) minY = node.y;
 }
 
 
